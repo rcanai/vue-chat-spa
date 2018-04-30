@@ -6,27 +6,41 @@
       <input
         type="text"
         placeholder="入力してください"
-        v-model="userName"
+        v-model="inputName"
         @keypress.enter="enter">
     </label>
-    <button type="button" class="button-primary" @click="enter">送信</button>
+    <button type="button" class="button-primary" @click="enter">参加</button>
   </section>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'home',
   data() {
     return {
-      userName: '',
+      inputName: '',
     };
+  },
+  computed: {
+    ...mapGetters([
+      'userName',
+    ]),
   },
   methods: {
     enter() {
       if (this.userName) {
+        this.$socket.open();
+        this.$socket.emit('add-user', this.userName);
         this.$router.push('/chat');
       }
     },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.$socket.close();
+    });
   },
 };
 </script>

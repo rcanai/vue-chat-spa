@@ -15,6 +15,7 @@
       <input
         type="text"
         placeholder="メッセージ"
+        v-model="message"
         @keyup="inputMessage"
         @keypress.enter="sendMessage">
       <button type="button" @click="sendMessage">送信</button>
@@ -23,24 +24,40 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'chat',
   data() {
     return {
       participants: 0,
+      message: '',
       messages: [
         { id: 1, title: 'AAA' },
         { id: 2, title: 'BBB' },
       ],
     };
   },
+  computed: {
+    ...mapGetters([
+      'userName',
+    ]),
+  },
   methods: {
     inputMessage() {
-      console.log('input message');
+      this.$socket.emit('typing');
     },
     sendMessage() {
-      console.log('send message');
+      if (this.message) {
+        this.$socket.emit('new-message', this.message);
+        this.message = '';
+      }
     },
+  },
+  mounted() {
+    if (!this.userName) {
+      this.$router.replace('/');
+    }
   },
 };
 </script>
@@ -51,6 +68,9 @@ export default {
   flex-flow: column wrap;
   width: 100%;
   .messages {
+    ol {
+      list-style: none;
+    }
   }
   footer {
     display: flex;

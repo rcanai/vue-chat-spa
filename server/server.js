@@ -1,23 +1,76 @@
-const express = require('express');
-const ws = require('ws');
-const app = express();
+// Setup basic express server
+var express = require('express');
+var app = express();
+var path = require('path');
+var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+var port = 8000;
 
-app.get('/', (req, res) => {
-  res.sendfile(__dirname + '/ws.html');
+server.listen(port, () => {
+  console.log('http://0.0.0.0:%d', port);
 });
 
-app.listen(3000, () => {
-  console.log('Example app listening on port 3000!')
-});
+// Routing
+app.use(express.static(path.join(__dirname, 'public')));
 
-const WebSocketServer = require('ws').Server;
-const wss = new WebSocketServer({port: 3000});
-wss.on('connection', function (ws) {
-  ws.on('message', function (message) {
-    console.log('received: %s', message)
-  })
-  setInterval(
-    () => ws.send(`${new Date()}`),
-    1000
-  )
-})
+// Chatroom
+
+var numUsers = 0;
+
+io.on('connection', (socket) => {
+  var addedUser = false;
+
+  // when the client emits 'new message', this listens and executes
+  socket.on('new-message', (data) => {
+    // we tell the client to execute 'new message'
+    socket.broadcast.emit('new-message', {
+      username: socket.username,
+      message: data
+    });
+  });
+
+  // when the client emits 'add user', this listens and executes
+  socket.on('add-user', (username) => {
+    if (addedUser) return;
+
+    // we store the username in the socket session for this client
+    socket.username = username;
+    numUsers += 1;
+    addedUser = true;
+    socket.emit('login', {
+      numUsers: numUsers
+    });
+    // echo globally (all clients) that a person has connected
+    socket.broadcast.emit('user-joined', {
+      username: socket.username,
+      numUsers: numUsers
+    });
+  });
+
+  // when the client emits 'typing', we broadcast it to others
+  socket.on('typing', () => {
+    socket.broadcast.emit('typing', {
+      username: socket.username
+    });
+  });
+
+  // when the client emits 'stop typing', we broadcast it to others
+  socket.on('stop-typing', () => {
+    socket.broadcast.emit('stop-typing', {
+      username: socket.username
+    });
+  });
+
+  // when the user disconnects.. perform this
+  socket.on('disconnect', () => {
+    if (addedUser) {
+      numUsers -= 1;
+
+      // echo globally that this client has left
+      socket.broadcast.emit('user-left', {
+        username: socket.username,
+        numUsers: numUsers
+      });
+    }
+  });
+});
