@@ -1,18 +1,32 @@
 <template>
-  <div class="home">
-    <img src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <section class="home">
+    <h1>ホーム</h1>
+    <label>
+      名前
+      <input
+        type="text"
+        placeholder="入力してください"
+        v-model="userName"
+        @keypress.enter="enter">
+    </label>
+    <button type="button" class="button-primary" @click="enter">送信</button>
+  </section>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue';
-
 export default {
   name: 'home',
-  components: {
-    HelloWorld,
+  data() {
+    return {
+      userName: '',
+    };
+  },
+  methods: {
+    enter() {
+      if (this.userName) {
+        this.$router.push('/chat');
+      }
+    },
   },
 };
 </script>
