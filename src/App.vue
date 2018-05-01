@@ -24,6 +24,71 @@
   </div>
 </template>
 
+<script>
+export default {
+  name: 'App',
+  mounted() {
+    this.$nextTick(() => {
+      this.$socket.off('login');
+      this.$socket.on('login', (data) => {
+        this.$store.state.participants = data.participants;
+      });
+      this.$socket.off('new-message');
+      this.$socket.on('new-message', (data) => {
+        this.$store.commit('removeTyping', data.userName);
+        this.$store.commit('addMessage', {
+          id: data.id,
+          userName: data.userName,
+          title: data.message,
+        });
+      });
+      this.$socket.off('user-joined');
+      this.$socket.on('user-joined', (data) => {
+        this.$store.state.participants = data.participants;
+        this.$store.commit('addMessage', {
+          id: data.id,
+          userName: data.userName,
+          title: 'が入室しました',
+        });
+      });
+      this.$socket.off('user-left');
+      this.$socket.on('user-left', (data) => {
+        this.$store.state.participants = data.participants;
+        this.$store.commit('addMessage', {
+          id: data.id,
+          userName: data.userName,
+          title: '退室しました',
+        });
+      });
+      this.$socket.off('typing');
+      this.$socket.on('typing', (data) => {
+        this.$store.commit('addTyping', {
+          id: data.id,
+          userName: data.userName,
+        });
+      });
+      this.$socket.off('stop-typing');
+      this.$socket.on('stop-typing', (data) => {
+        this.$store.commit('removeTyping', data.userName);
+      });
+      this.$socket.off('disconnect');
+      this.$socket.on('disconnect', () => {
+        console.error('切断');
+      });
+      this.$socket.off('reconnect');
+      this.$socket.on('reconnect', () => {
+        console.log('再接続');
+      });
+      this.$socket.off('reconnect_error');
+      this.$socket.on('reconnect_error', () => {
+        console.error('再接続失敗');
+      });
+    });
+  },
+};
+</script>
+
+
 <style lang="scss">
 @import '~normalize.css/normalize.css';
 

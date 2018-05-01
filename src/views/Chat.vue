@@ -7,7 +7,12 @@
     <div class="messages">
       <ol>
         <li v-for="msg in messages" :key="msg.id">
-          {{msg.title}}
+          {{msg.userName}} : {{msg.title}}
+        </li>
+      </ol>
+      <ol>
+        <li v-for="typ in typings" :key="typ.id">
+          {{typ.userName}} ： 入力中...
         </li>
       </ol>
     </div>
@@ -30,22 +35,33 @@ export default {
   name: 'chat',
   data() {
     return {
-      participants: 0,
       message: '',
-      messages: [
-        { id: 1, title: 'AAA' },
-        { id: 2, title: 'BBB' },
-      ],
+      typingTimeout: null,
     };
   },
   computed: {
     ...mapGetters([
       'userName',
+      'participants',
+      'messages',
+      'typings',
     ]),
   },
   methods: {
-    inputMessage() {
+    inputMessage(e) {
+      console.log(e);
+      if (e.key === 'Enter') {
+        return;
+      }
       this.$socket.emit('typing');
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = setTimeout(
+        () => {
+          this.$socket.emit('stop-typing');
+          clearTimeout(this.typingTimeout);
+        },
+        3000,
+      );
     },
     sendMessage() {
       if (this.message) {

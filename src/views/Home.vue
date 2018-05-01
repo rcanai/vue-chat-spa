@@ -14,8 +14,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
 export default {
   name: 'home',
   data() {
@@ -23,16 +21,12 @@ export default {
       inputName: '',
     };
   },
-  computed: {
-    ...mapGetters([
-      'userName',
-    ]),
-  },
   methods: {
     enter() {
-      if (this.userName) {
+      if (this.inputName) {
         this.$socket.open();
-        this.$socket.emit('add-user', this.userName);
+        this.$socket.emit('add-user', this.inputName);
+        this.$store.state.userName = this.inputName;
         this.$router.push('/chat');
       }
     },
