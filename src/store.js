@@ -26,12 +26,8 @@ export default new Vuex.Store({
     },
   },
   mutations: {
-    addMessage(state, { id, userName, title }) {
-      state.messages.push({
-        id,
-        userName,
-        title,
-      });
+    addMessage(state, data) {
+      state.messages.push(data);
     },
     addTyping(state, { id, userName }) {
       const items = state.typings.find(item =>

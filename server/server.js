@@ -6,6 +6,7 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const port = 8000;
 
+const moment = require('moment');
 const Guid = require('guid');
 
 server.listen(port, () => {
@@ -25,11 +26,18 @@ io.on('connection', (socket) => {
   // when the client emits 'new message', this listens and executes
   socket.on('new-message', (data) => {
     // we tell the client to execute 'new message'
-    socket.broadcast.emit('new-message', {
+    let obj = {
       id: Guid.create(),
       userName: socket.userName,
-      message: data
-    });
+      title: data,
+      createdAt: moment().format(),
+      isMine: false
+    };
+    socket.broadcast.emit('new-message', obj);
+
+    // To myself
+    obj.isMine = true;
+    socket.emit('new-message', obj);
   });
 
   // when the client emits 'add user', this listens and executes
@@ -42,13 +50,15 @@ io.on('connection', (socket) => {
     addedUser = true;
     socket.emit('login', {
       id: Guid.create(),
-      participants: participants
+      participants: participants,
+      createdAt: moment().format()
     });
     // echo globally (all clients) that a person has connected
     socket.broadcast.emit('user-joined', {
       id: Guid.create(),
       userName: socket.userName,
-      participants: participants
+      participants: participants,
+      createdAt: moment().format()
     });
   });
 
@@ -56,7 +66,8 @@ io.on('connection', (socket) => {
   socket.on('typing', () => {
     socket.broadcast.emit('typing', {
       id: Guid.create(),
-      userName: socket.userName
+      userName: socket.userName,
+      createdAt: moment().format()
     });
   });
 
@@ -64,7 +75,8 @@ io.on('connection', (socket) => {
   socket.on('stop-typing', () => {
     socket.broadcast.emit('stop-typing', {
       id: Guid.create(),
-      userName: socket.userName
+      userName: socket.userName,
+      createdAt: moment().format()
     });
   });
 
@@ -77,7 +89,8 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('user-left', {
         id: Guid.create(),
         userName: socket.userName,
-        participants: participants
+        participants: participants,
+        createdAt: moment().format()
       });
     }
   });

@@ -2,7 +2,7 @@
   <div id="app">
     <header id="header">
       <router-link to="/">
-        <h1>Chat SPA</h1>
+        <div class="app-title">Chat SPA</div>
       </router-link>
       <nav>
         <ul>
@@ -36,19 +36,15 @@ export default {
       this.$socket.off('new-message');
       this.$socket.on('new-message', (data) => {
         this.$store.commit('removeTyping', data.userName);
-        this.$store.commit('addMessage', {
-          id: data.id,
-          userName: data.userName,
-          title: data.message,
-        });
+        this.$store.commit('addMessage', data);
       });
       this.$socket.off('user-joined');
       this.$socket.on('user-joined', (data) => {
         this.$store.state.participants = data.participants;
         this.$store.commit('addMessage', {
           id: data.id,
-          userName: data.userName,
-          title: 'が入室しました',
+          userName: 'Server',
+          title: `${data.userName}が入室しました`,
         });
       });
       this.$socket.off('user-left');
@@ -56,8 +52,8 @@ export default {
         this.$store.state.participants = data.participants;
         this.$store.commit('addMessage', {
           id: data.id,
-          userName: data.userName,
-          title: '退室しました',
+          userName: 'Server',
+          title: `${data.userName}が退室しました`,
         });
       });
       this.$socket.off('typing');
@@ -73,7 +69,8 @@ export default {
       });
       this.$socket.off('disconnect');
       this.$socket.on('disconnect', () => {
-        console.error('切断');
+        this.$socket.close();
+        this.$router.replace('/');
       });
       this.$socket.off('reconnect');
       this.$socket.on('reconnect', () => {
@@ -81,7 +78,8 @@ export default {
       });
       this.$socket.off('reconnect_error');
       this.$socket.on('reconnect_error', () => {
-        console.error('再接続失敗');
+        this.$socket.close();
+        this.$router.replace('/');
       });
     });
   },
@@ -92,12 +90,8 @@ export default {
 <style lang="scss">
 @import '~normalize.css/normalize.css';
 
-$color-initial: #fff !default;
-$color-primary: #007E65 !default;
-$color-secondary: #1ABC9C !default;
-$color-tertiary: #66D8C1 !default;
-$color-quaternary: #d1d1d1 !default;
-$color-quinary: #e1e1e1 !default;
+@import './color.scss';
+
 @import '~milligram-scss/dist/milligram.scss';
 
 body {
@@ -112,7 +106,7 @@ body {
   * {
     margin: 0;
   }
-  h1 {
+  .app-title {
     font-size: 3rem;
   }
   nav {
