@@ -1,11 +1,10 @@
-// Setup basic express server
 const express = require('express');
-const app = express();
-const path = require('path');
-const server = require('http').createServer(app);
+const exp = express();
+const server = require('http').createServer(exp);
 const io = require('socket.io')(server);
 const port = 8000;
 
+const path = require('path');
 const moment = require('moment');
 const Guid = require('guid');
 
@@ -13,84 +12,90 @@ server.listen(port, () => {
   console.log('http://0.0.0.0:%d', port);
 });
 
-// Routing
-app.use(express.static(path.join(__dirname, 'public')));
+// exp.use(express.static(path.join(__dirname, 'public')));
 
-// Chatroom
+// exp.set('views', __dirname + '/dist');
+// exp.get('/', (req, res) => {
+//   res.render('index', {});
+// });
 
-let participants = 0;
+const getNowDatetimeString = function () {
+  return moment().format('YYYY-MM-DD H:m:s');
+}
+
+let participants = [];
 
 io.on('connection', (socket) => {
   let addedUser = false;
 
-  // when the client emits 'new message', this listens and executes
   socket.on('new-message', (data) => {
-    // we tell the client to execute 'new message'
     let obj = {
       id: Guid.create(),
       userName: socket.userName,
-      title: data,
-      createdAt: moment().format(),
+      content: data,
+      createdAt: getNowDatetimeString(),
       isMine: false
     };
     socket.broadcast.emit('new-message', obj);
 
-    // To myself
     obj.isMine = true;
     socket.emit('new-message', obj);
   });
 
-  // when the client emits 'add user', this listens and executes
   socket.on('add-user', (userName) => {
     if (addedUser) return;
 
-    // we store the userName in the socket session for this client
+    if (participants.indexOf(userName) === -1) {
+      participants.push(userName);
+    } else {
+      socket.emit('duplication');
+      return;
+    }
+
     socket.userName = userName;
-    participants += 1;
+
     addedUser = true;
+
     socket.emit('login', {
       id: Guid.create(),
       participants: participants,
-      createdAt: moment().format()
+      createdAt: getNowDatetimeString(),
     });
-    // echo globally (all clients) that a person has connected
+
     socket.broadcast.emit('user-joined', {
       id: Guid.create(),
       userName: socket.userName,
       participants: participants,
-      createdAt: moment().format()
+      createdAt: getNowDatetimeString(),
     });
   });
 
-  // when the client emits 'typing', we broadcast it to others
   socket.on('typing', () => {
     socket.broadcast.emit('typing', {
       id: Guid.create(),
       userName: socket.userName,
-      createdAt: moment().format()
+      createdAt: getNowDatetimeString(),
     });
   });
 
-  // when the client emits 'stop typing', we broadcast it to others
   socket.on('stop-typing', () => {
     socket.broadcast.emit('stop-typing', {
       id: Guid.create(),
       userName: socket.userName,
-      createdAt: moment().format()
+      createdAt: getNowDatetimeString(),
     });
   });
 
-  // when the user disconnects.. perform this
   socket.on('disconnect', () => {
     if (addedUser) {
-      participants -= 1;
+      const index = participants.indexOf(socket.userName);
+      participants.splice(index, 1);
 
-      // echo globally that this client has left
       socket.broadcast.emit('user-left', {
         id: Guid.create(),
         userName: socket.userName,
         participants: participants,
-        createdAt: moment().format()
+        createdAt: getNowDatetimeString(),
       });
     }
   });

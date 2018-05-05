@@ -7,7 +7,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     userName: '',
-    participants: 0,
+    participants: [],
     messages: [],
     typings: [],
   },
@@ -17,6 +17,9 @@ export default new Vuex.Store({
     },
     participants(state) {
       return state.participants;
+    },
+    participantsCount(state) {
+      return state.participants.length;
     },
     messages(state) {
       return state.messages;
@@ -30,9 +33,9 @@ export default new Vuex.Store({
       state.messages.push(data);
     },
     addTyping(state, { id, userName }) {
-      const items = state.typings.find(item =>
+      const index = state.typings.findIndex(item =>
         item.userName === userName);
-      if (items) {
+      if (index !== -1) {
         return;
       }
       state.typings.push({
@@ -44,6 +47,12 @@ export default new Vuex.Store({
       const index = state.typings.findIndex(item =>
         item.userName === userName);
       state.typings.splice(index, 1);
+    },
+    clear(state) {
+      state.userName = '';
+      state.participants = [];
+      state.messages = [];
+      state.typings = [];
     },
   },
   actions: {

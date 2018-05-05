@@ -1,5 +1,17 @@
 <template>
   <section class="about">
-    <h1>このサイトについて</h1>
+    <header>
+      <h2>このサイトについて</h2>
+    </header>
   </section>
 </template>
+<script>
+export default {
+  // pass
+};
+</script>
+
+<style lang="scss" scoped>
+@import '../color.scss';
+
+</style>

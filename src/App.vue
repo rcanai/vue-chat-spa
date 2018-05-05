@@ -1,61 +1,62 @@
 <template>
   <div id="app">
-    <header id="header">
-      <router-link to="/">
-        <div class="app-title">Chat SPA</div>
-      </router-link>
-      <nav>
-        <ul>
-          <li>
-            <router-link to="/">Home</router-link>
-          </li>
-          <li>
-            <router-link to="/about">About</router-link>
-          </li>
-        </ul>
-      </nav>
-    </header>
-    <main class="container">
+    <the-header/>
+    <main>
       <router-view/>
     </main>
-    <footer id="header">
-      <small>&copy; 2018 XXXX</small>
-    </footer>
+    <the-footer/>
   </div>
 </template>
 
 <script>
+import TheHeader from '@/components/TheHeader.vue';
+import TheFooter from '@/components/TheFooter.vue';
+
 export default {
   name: 'App',
+  components: {
+    TheHeader,
+    TheFooter,
+  },
   mounted() {
     this.$nextTick(() => {
       this.$socket.off('login');
       this.$socket.on('login', (data) => {
         this.$store.state.participants = data.participants;
       });
+
+      this.$socket.off('duplication');
+      this.$socket.on('duplication', () => {
+        this.$store.commit('clear');
+        this.$router.replace('/');
+      });
+
       this.$socket.off('new-message');
       this.$socket.on('new-message', (data) => {
         this.$store.commit('removeTyping', data.userName);
         this.$store.commit('addMessage', data);
       });
+
       this.$socket.off('user-joined');
       this.$socket.on('user-joined', (data) => {
         this.$store.state.participants = data.participants;
         this.$store.commit('addMessage', {
           id: data.id,
           userName: 'Server',
-          title: `${data.userName}が入室しました`,
+          content: `${data.userName}が入室しました`,
         });
       });
+
       this.$socket.off('user-left');
       this.$socket.on('user-left', (data) => {
         this.$store.state.participants = data.participants;
         this.$store.commit('addMessage', {
           id: data.id,
           userName: 'Server',
-          title: `${data.userName}が退室しました`,
+          content: `${data.userName}が退室しました`,
         });
       });
+
       this.$socket.off('typing');
       this.$socket.on('typing', (data) => {
         this.$store.commit('addTyping', {
@@ -63,23 +64,29 @@ export default {
           userName: data.userName,
         });
       });
+
       this.$socket.off('stop-typing');
       this.$socket.on('stop-typing', (data) => {
         this.$store.commit('removeTyping', data.userName);
       });
+
       this.$socket.off('disconnect');
       this.$socket.on('disconnect', () => {
         this.$socket.close();
         this.$router.replace('/');
+        this.$store.commit('clear');
       });
+
       this.$socket.off('reconnect');
       this.$socket.on('reconnect', () => {
         console.log('再接続');
       });
+
       this.$socket.off('reconnect_error');
       this.$socket.on('reconnect_error', () => {
         this.$socket.close();
         this.$router.replace('/');
+        this.$store.commit('clear');
       });
     });
   },
@@ -98,41 +105,18 @@ body {
   font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', メイリオ, Meiryo, 'ＭＳ Ｐゴシック', sans-serif;
 }
 
-#header {
-  height: 5rem;
-  display: flex;
-  align-items: center;
-  background-color: $color-tertiary;
-  * {
-    margin: 0;
-  }
-  .app-title {
-    font-size: 3rem;
-  }
-  nav {
-    ul {
-      list-style: none;
-      display: flex;
-      align-items: center;
-      li {
-        margin-left: 2rem;
-      }
-    }
-  }
+ul, ol {
+  list-style: none;
 }
 
-#footer {
-  height: 5rem;
-  background-color: $color-tertiary;
-  display: flex;
-  align-items: center;
+a, button {
+  transition: all 0.3s;
 }
 
-.container {
-  padding-top: 2rem;
-  min-height: calc(100vh - 10rem);
+#app {
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
 }
-
-
 </style>

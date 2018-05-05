@@ -1,15 +1,17 @@
 <template>
   <section class="home">
-    <h1>ホーム</h1>
-    <label>
-      名前
-      <input
-        type="text"
-        placeholder="入力してください"
-        v-model="inputName"
-        @keypress.enter="enter">
-    </label>
-    <button type="button" class="button-primary" @click="enter">参加</button>
+    <h2>ホーム</h2>
+    <div class="container">
+      <label>
+        名前
+        <input
+          type="text"
+          placeholder="入力してください"
+          v-model="inputName"
+          @keypress.enter="enter">
+      </label>
+      <button type="button" class="button-primary" @click="enter">参加</button>
+    </div>
   </section>
 </template>
 
