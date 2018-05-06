@@ -1,7 +1,9 @@
 <template>
   <section class="home">
-    <h2>ホーム</h2>
-    <div class="container">
+    <header class="container">
+      <h2 class="container">ホーム</h2>
+    </header>
+    <div class="container" >
       <label>
         名前
         <input
@@ -36,6 +38,21 @@ export default {
   mounted() {
     this.$nextTick(() => {
       this.$socket.close();
+
+      // 入室
+      this.$socket.off('login');
+      this.$socket.on('login', (data) => {
+        this.$store.state.participants = data.participants;
+      });
+
+      // 他の参加者と名前が重複エラー
+      this.$socket.off('duplication');
+      this.$socket.on('duplication', () => {
+        // eslint-disable-next-line no-alert
+        alert('名前が他の参加者と重複しています');
+        this.$store.commit('clear');
+        this.$router.replace('/');
+      });
     });
   },
 };

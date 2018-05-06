@@ -1,6 +1,6 @@
 <template>
   <section class="chat">
-    <header id="chat-header">
+    <header id="chat-header" class="container">
       <div :title="participants">
         {{participantsCount}}人が参加中
       </div>
@@ -25,7 +25,7 @@
         </li>
       </ol>
     </div>
-    <footer id="chat-footer">
+    <footer id="chat-footer" class="container">
       <textarea
         placeholder="メッセージ（Ctrl+Enterで送信）"
         v-model="message"
@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     inputMessage(e) {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === 'Control') {
         return;
       }
       this.$socket.emit('typing');
@@ -88,9 +88,69 @@ export default {
     },
   },
   mounted() {
-    if (!this.userName) {
-      this.$router.replace('/');
-    }
+    this.$nextTick(() => {
+      if (!this.userName) {
+        this.$router.replace('/');
+      }
+
+      // メッセージ着信
+      this.$socket.off('new-message');
+      this.$socket.on('new-message', (data) => {
+        this.$store.commit('removeTyping', data.userName);
+        this.$store.commit('addMessage', data);
+        // 通知
+        if (document.hidden) {
+          const options = {
+            body: `[${data.userName}] ${data.content}`,
+            icon: '',
+          };
+          const n = new Notification('新しいメッセージ | Chat SPA', options);
+          setTimeout(() => {
+            n.close.bind(n);
+          }, 5000);
+        }
+      });
+
+      // 新規参加者が入室
+      this.$socket.off('user-joined');
+      this.$socket.on('user-joined', (data) => {
+        this.$store.state.participants = data.participants;
+        this.$store.commit('addMessage', {
+          id: data.id,
+          userName: 'Server',
+          content: `${data.userName}が入室しました`,
+        });
+      });
+
+      // 参加者が退室
+      this.$socket.off('user-left');
+      this.$socket.on('user-left', (data) => {
+        this.$store.state.participants = data.participants;
+        this.$store.commit('addMessage', {
+          id: data.id,
+          userName: 'Server',
+          content: `${data.userName}が退室しました`,
+        });
+      });
+
+      // 参加者がタイピング
+      this.$socket.off('typing');
+      this.$socket.on('typing', (data) => {
+        this.$store.commit('addTyping', {
+          id: data.id,
+          userName: data.userName,
+        });
+      });
+
+      // 参加者のタイピングが終了
+      this.$socket.off('stop-typing');
+      this.$socket.on('stop-typing', (data) => {
+        this.$store.commit('removeTyping', data.userName);
+      });
+    });
+  },
+  destroyed() {
+    this.$socket.close();
   },
 };
 </script>
@@ -103,32 +163,36 @@ export default {
 }
 
 #chat-body {
-  height: calc(100vh - 20rem);
+  height: calc(100vh - 18rem);
   overflow: auto;
   .message,
   .typing {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    flex-wrap: wrap;
     align-items: flex-start;
     .avatar {
-      width: 7rem;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      width: 100%;
     }
     .message-content {
-      margin-top: 1rem;
+      margin: 0;
+      margin-left: 2rem;
       padding: 0.5rem;
       border: 0.1rem solid $color-secondary;
       border-radius: 0 1rem 1rem 1rem;
     }
     &.is-mine {
-      flex-flow: row-reverse;
+      align-items: flex-end;
       .avatar {
         text-align: right;
       }
       .message-content {
+        margin: 0;
+        margin-right: 2rem;
         border-radius: 1rem 0 1rem 1rem;
       }
     }

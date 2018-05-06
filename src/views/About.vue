@@ -1,6 +1,6 @@
 <template>
   <section class="about">
-    <header>
+    <header class="container">
       <h2>このサイトについて</h2>
     </header>
   </section>

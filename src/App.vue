@@ -19,57 +19,17 @@ export default {
     TheFooter,
   },
   mounted() {
+    if (('Notification' in window) && Notification.permission !== 'denied') {
+      Notification.requestPermission((permission) => {
+        // ユーザが許可した場合は、通知を作成する
+        if (permission === 'granted') {
+          // pass
+        }
+      });
+    }
+
     this.$nextTick(() => {
-      this.$socket.off('login');
-      this.$socket.on('login', (data) => {
-        this.$store.state.participants = data.participants;
-      });
-
-      this.$socket.off('duplication');
-      this.$socket.on('duplication', () => {
-        this.$store.commit('clear');
-        this.$router.replace('/');
-      });
-
-      this.$socket.off('new-message');
-      this.$socket.on('new-message', (data) => {
-        this.$store.commit('removeTyping', data.userName);
-        this.$store.commit('addMessage', data);
-      });
-
-      this.$socket.off('user-joined');
-      this.$socket.on('user-joined', (data) => {
-        this.$store.state.participants = data.participants;
-        this.$store.commit('addMessage', {
-          id: data.id,
-          userName: 'Server',
-          content: `${data.userName}が入室しました`,
-        });
-      });
-
-      this.$socket.off('user-left');
-      this.$socket.on('user-left', (data) => {
-        this.$store.state.participants = data.participants;
-        this.$store.commit('addMessage', {
-          id: data.id,
-          userName: 'Server',
-          content: `${data.userName}が退室しました`,
-        });
-      });
-
-      this.$socket.off('typing');
-      this.$socket.on('typing', (data) => {
-        this.$store.commit('addTyping', {
-          id: data.id,
-          userName: data.userName,
-        });
-      });
-
-      this.$socket.off('stop-typing');
-      this.$socket.on('stop-typing', (data) => {
-        this.$store.commit('removeTyping', data.userName);
-      });
-
+      // 切断
       this.$socket.off('disconnect');
       this.$socket.on('disconnect', () => {
         this.$socket.close();
@@ -77,11 +37,13 @@ export default {
         this.$store.commit('clear');
       });
 
+      // 再接続
       this.$socket.off('reconnect');
       this.$socket.on('reconnect', () => {
         console.log('再接続');
       });
 
+      // 再接続に失敗
       this.$socket.off('reconnect_error');
       this.$socket.on('reconnect_error', () => {
         this.$socket.close();
