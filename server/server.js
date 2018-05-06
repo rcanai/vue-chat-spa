@@ -12,12 +12,11 @@ server.listen(port, () => {
   console.log('http://0.0.0.0:%d', port);
 });
 
-// exp.use(express.static(path.join(__dirname, 'public')));
+exp.use('/', express.static('dist'));
 
-// exp.set('views', __dirname + '/dist');
-// exp.get('/', (req, res) => {
-//   res.render('index', {});
-// });
+exp.get('/', (req, res) => {
+  res.sendFile('index.html');
+});
 
 const getNowDatetimeString = function () {
   return moment().format('YYYY-MM-DD H:m:s');
